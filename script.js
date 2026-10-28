@@ -125,28 +125,33 @@ const birthdayAudio = document.getElementById('birthday-audio');
 const musicToggle = document.getElementById('music-toggle');
 
 if (birthdayAudio && musicToggle) {
-  // Attempt to start music when the website opens
   birthdayAudio.volume = 0.5;
 
-  const startMusic = async () => {
+  function updateMusicButton(isPlaying) {
+    musicToggle.textContent = isPlaying
+      ? '♫ Pause music'
+      : '♫ Tap to play our song';
+
+    musicToggle.setAttribute('aria-pressed', String(isPlaying));
+  }
+
+  async function startMusic() {
     try {
       await birthdayAudio.play();
-      musicToggle.textContent = '♫ Pause music';
-      musicToggle.setAttribute('aria-pressed', 'true');
+      updateMusicButton(true);
       return true;
     } catch (error) {
-      // Autoplay may be blocked by the browser
-      musicToggle.textContent = '♫ Play our song';
-      musicToggle.setAttribute('aria-pressed', 'false');
+      console.log('Music autoplay failed:', error.name, error.message);
+      updateMusicButton(false);
       return false;
     }
-  };
+  }
 
-  // Try autoplay on page load
+  // Attempt autoplay when the website opens
   startMusic();
 
-  // If autoplay is blocked, start music on the first visitor interaction
-  const startOnFirstInteraction = async () => {
+  // If autoplay is blocked, start music on the first interaction
+  async function startOnFirstInteraction() {
     if (birthdayAudio.paused) {
       await startMusic();
     }
@@ -155,21 +160,29 @@ if (birthdayAudio && musicToggle) {
       document.removeEventListener('click', startOnFirstInteraction);
       document.removeEventListener('touchstart', startOnFirstInteraction);
     }
-  };
+  }
 
   document.addEventListener('click', startOnFirstInteraction);
-  document.addEventListener('touchstart', startOnFirstInteraction, {
-    passive: true
-  });
+  document.addEventListener(
+    'touchstart',
+    startOnFirstInteraction,
+    { passive: true }
+  );
 
-  // Music button: play or pause
-  musicToggle.addEventListener('click', async () => {
+  // Play/pause button
+  musicToggle.addEventListener('click', async (event) => {
+    // Prevent this click from also triggering the first-interaction handler
+    event.stopPropagation();
+
     if (birthdayAudio.paused) {
       await startMusic();
     } else {
       birthdayAudio.pause();
-      musicToggle.textContent = '♫ Play our song';
-      musicToggle.setAttribute('aria-pressed', 'false');
+      updateMusicButton(false);
     }
   });
+
+  // Keep the button in sync with actual audio playback
+  birthdayAudio.addEventListener('play', () => updateMusicButton(true));
+  birthdayAudio.addEventListener('pause', () => updateMusicButton(false));
 }
