@@ -123,20 +123,54 @@ document.addEventListener('keydown',event=>{
 // Soft romantic instrumental: starts only after the visitor taps the music control.
 const birthdayAudio = document.getElementById('birthday-audio');
 const musicToggle = document.getElementById('music-toggle');
+
 if (birthdayAudio && musicToggle) {
- musicToggle.addEventListener('click', async () => {
-  if (birthdayAudio.paused) {
-   try {
-    await birthdayAudio.play();
-    musicToggle.textContent = '♫ Pause music';
-    musicToggle.setAttribute('aria-pressed', 'true');
-   } catch (error) {
-    musicToggle.textContent = '♫ Tap to retry';
-   }
-  } else {
-   birthdayAudio.pause();
-   musicToggle.textContent = '♫ Play music';
-   musicToggle.setAttribute('aria-pressed', 'false');
-  }
- });
+  // Attempt to start music when the website opens
+  birthdayAudio.volume = 0.5;
+
+  const startMusic = async () => {
+    try {
+      await birthdayAudio.play();
+      musicToggle.textContent = '♫ Pause music';
+      musicToggle.setAttribute('aria-pressed', 'true');
+      return true;
+    } catch (error) {
+      // Autoplay may be blocked by the browser
+      musicToggle.textContent = '♫ Play our song';
+      musicToggle.setAttribute('aria-pressed', 'false');
+      return false;
+    }
+  };
+
+  // Try autoplay on page load
+  startMusic();
+
+  // If autoplay is blocked, start music on the first visitor interaction
+  const startOnFirstInteraction = async () => {
+    if (birthdayAudio.paused) {
+      await startMusic();
+    }
+
+    if (!birthdayAudio.paused) {
+      document.removeEventListener('click', startOnFirstInteraction);
+      document.removeEventListener('touchstart', startOnFirstInteraction);
+    }
+  };
+
+  document.addEventListener('click', startOnFirstInteraction);
+  document.addEventListener('touchstart', startOnFirstInteraction, {
+    passive: true
+  });
+
+  // Music button: play or pause
+  musicToggle.addEventListener('click', async () => {
+    if (birthdayAudio.paused) {
+      await startMusic();
+    } else {
+      birthdayAudio.pause();
+      musicToggle.textContent = '♫ Play our song';
+      musicToggle.setAttribute('aria-pressed', 'false');
+    }
+  });
 }
+
