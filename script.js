@@ -120,7 +120,7 @@ document.addEventListener('keydown',event=>{
  }
 });
 
-// Soft romantic instrumental: starts only after the visitor taps the music control.
+// Soft romantic instrumental: starts automatically on interaction
 const birthdayAudio = document.getElementById('birthday-audio');
 const musicToggle = document.getElementById('music-toggle');
 
@@ -173,4 +173,3 @@ if (birthdayAudio && musicToggle) {
     }
   });
 }
-
